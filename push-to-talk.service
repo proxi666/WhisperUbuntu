@@ -1,0 +1,13 @@
+[Unit]
+Description=Local STT Push-to-Talk Listener
+After=local-stt.service
+Requires=local-stt.service
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/whisperubuntu-push-to-talk
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target
