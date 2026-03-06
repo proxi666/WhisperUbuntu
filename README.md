@@ -49,7 +49,7 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ./install_user_services.sh
-./bin/toggle_local_stt.sh
+./toggle_local_stt.sh
 ```
 
 Once running:
@@ -113,11 +113,9 @@ Default workflow:
 
 ## Repository Layout
 
-- `scripts/`: Python entrypoints for transcription, daemon control, and hotkey handling
-- `bin/`: shell launchers and convenience commands
-- `systemd/`: portable user service unit files
-- `install_user_services.sh`: installs the user services and launcher symlinks
-- `README.md`: setup, architecture, and usage notes
+- `scripts/`: Python code
+- `systemd/`: service unit files
+- root-level `.sh` files: user-facing commands
 
 ## Setup
 
@@ -133,8 +131,7 @@ If your machine does not already have a working NVIDIA driver / CUDA-capable set
 ## One-Off File Transcription
 
 ```bash
-source .venv/bin/activate
-python scripts/transcribe.py /path/to/audio.wav --device cuda --compute-type float16 --language en --output transcript.txt --json-output transcript.json
+./run-transcribe.sh /path/to/audio.wav --device cuda --compute-type float16 --language en --output transcript.txt --json-output transcript.json
 ```
 
 ## Manual Start/Stop
@@ -150,7 +147,7 @@ Install the user services first:
 Start or stop both services with:
 
 ```bash
-./bin/toggle_local_stt.sh
+./toggle_local_stt.sh
 ```
 
 You can also use the installed launcher directly after setup:
