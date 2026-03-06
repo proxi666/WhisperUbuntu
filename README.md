@@ -4,6 +4,8 @@ Local push-to-talk voice input for Ubuntu coding workflows.
 
 `WhisperUbuntu` keeps a Whisper model warm on GPU, listens for a global hold-to-talk key, transcribes spoken English locally, and sends the result back into the active workflow. It was built for the specific use case of speaking prompts into coding tools such as Codex inside VS Code without depending on a cloud speech API.
 
+Tested on Ubuntu-style desktop workflows with X11 and NVIDIA GPU inference.
+
 ## Assumptions
 
 This project is aimed at a Linux user who is already on Ubuntu, ideally Ubuntu 22.04 or a similar setup.
@@ -37,6 +39,25 @@ This repo is not trying to be a full "fresh Ubuntu machine bootstrap" guide. The
 - Types text back into the focused window and also supports clipboard-style flow
 - Lets you start and stop the whole setup manually to control VRAM usage
 
+## Quick Start
+
+```bash
+git clone https://github.com/proxi666/WhisperUbuntu.git
+cd WhisperUbuntu
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+./install_user_services.sh
+./toggle_local_stt.sh
+```
+
+Once running:
+
+- press `F8` once to start recording
+- press `F8` again to stop recording
+- the transcript is typed back into the focused window
+
 ## Why This Exists
 
 Existing voice input tools on Windows and macOS are easier to find. On Ubuntu, the missing piece was not the model itself, but the end-to-end workflow:
@@ -62,15 +83,13 @@ This project ties those pieces together into one practical local dictation loop.
 
 ## Model Used
 
-
-The actual transcription model is `Whisper large-v3-turbo`, run locally through `faster-whisper` and its converted runtime format. What this project adds is the workflow layer around that model:
+The actual transcription model is `Whisper large-v3-turbo`, run locally through `faster-whisper` and its converted runtime format. This repository does not introduce a new speech model. What it adds is the workflow layer around that model:
 
 - microphone capture
 - warm GPU daemon
 - global hotkey handling
 - user services
 - direct text handoff back into the active coding workflow
-
 
 ## GPU Usage
 
@@ -92,7 +111,6 @@ Default workflow:
 - Output is typed back into the active window
 - Clipboard copy is treated as a secondary best-effort path
 
-
 ## Repository Layout
 
 - `voice_hotkey_daemon.py`: warm GPU daemon that records and transcribes
@@ -109,7 +127,6 @@ Default workflow:
 ## Setup
 
 ```bash
-cd local-stt
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
@@ -139,6 +156,12 @@ Start or stop both services with:
 
 ```bash
 ./toggle_local_stt.sh
+```
+
+You can also use the installed launcher directly after setup:
+
+```bash
+~/.local/bin/whisperubuntu-toggle
 ```
 
 ## User Services
@@ -176,6 +199,13 @@ systemctl --user stop local-stt.service
 - `large-v3-turbo` was chosen because it gives strong quality with lower latency and lower VRAM cost than `large-v3`.
 - This project is tuned for Ubuntu and X11. It is not a generic cross-platform voice layer yet.
 
+## Limitations
+
+- tuned for Ubuntu and X11 rather than being fully cross-platform
+- assumes a working NVIDIA/CUDA stack if you want GPU inference
+- clipboard behavior can vary by desktop session, so direct typing is the primary handoff path
+- if another application already owns your chosen hotkey, you may need to change `F8`
+
 ## Future Improvements
 
 - Better clipboard integration across desktop environments
@@ -183,3 +213,7 @@ systemctl --user stop local-stt.service
 - Configurable model and language settings
 - Wayland support
 - Cleaner packaging for reuse on other Ubuntu machines
+
+## License
+
+MIT
