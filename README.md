@@ -49,7 +49,7 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ./install_user_services.sh
-./toggle_local_stt.sh
+./bin/toggle_local_stt.sh
 ```
 
 Once running:
@@ -113,16 +113,11 @@ Default workflow:
 
 ## Repository Layout
 
-- `voice_hotkey_daemon.py`: warm GPU daemon that records and transcribes
-- `push_to_talk_listener.py`: global hold-to-talk listener
-- `voice_hotkey_client.py`: control client for the daemon socket
-- `install_user_services.sh`: installs portable user services and launcher symlinks
-- `start_local_stt.sh`: repo-local launcher for the daemon
-- `start_push_to_talk.sh`: repo-local launcher for the hotkey listener
-- `toggle_local_stt.sh`: start/stop toggle for the user services
-- `local-stt.service`: user service for the transcription daemon
-- `push-to-talk.service`: user service for the hotkey listener
-- `transcribe.py`: one-off file transcription CLI
+- `scripts/`: Python entrypoints for transcription, daemon control, and hotkey handling
+- `bin/`: shell launchers and convenience commands
+- `systemd/`: portable user service unit files
+- `install_user_services.sh`: installs the user services and launcher symlinks
+- `README.md`: setup, architecture, and usage notes
 
 ## Setup
 
@@ -139,7 +134,7 @@ If your machine does not already have a working NVIDIA driver / CUDA-capable set
 
 ```bash
 source .venv/bin/activate
-python transcribe.py /path/to/audio.wav --device cuda --compute-type float16 --language en --output transcript.txt --json-output transcript.json
+python scripts/transcribe.py /path/to/audio.wav --device cuda --compute-type float16 --language en --output transcript.txt --json-output transcript.json
 ```
 
 ## Manual Start/Stop
@@ -155,7 +150,7 @@ Install the user services first:
 Start or stop both services with:
 
 ```bash
-./toggle_local_stt.sh
+./bin/toggle_local_stt.sh
 ```
 
 You can also use the installed launcher directly after setup:
