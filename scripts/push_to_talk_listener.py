@@ -6,6 +6,7 @@ import os
 import subprocess
 import sys
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 from pynput import keyboard
@@ -21,7 +22,7 @@ def default_socket_path() -> Path:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Hold a global key to record, release to transcribe and copy"
+        description="Press a global key once to record, press it again to transcribe"
     )
     parser.add_argument(
         "--key",
@@ -44,7 +45,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-mode",
         choices=["type", "clipboard", "both"],
-        default="both",
+        default="type",
         help="What to do with the transcript after release",
     )
     return parser.parse_args()
@@ -98,11 +99,51 @@ def type_text(controller: Controller, text: str) -> None:
     controller.type(text)
 
 
+@dataclass
+class ToggleRecorder:
+    debounce_seconds: float = 0.15
+    recording: bool = False
+    pressed: bool = False
+    last_toggle: float | None = None
+
+    def handle_press(self, now: float) -> str | None:
+        if self.pressed:
+            return None
+        self.pressed = True
+        if self.last_toggle is not None and now - self.last_toggle < self.debounce_seconds:
+            return None
+        self.last_toggle = now
+        self.recording = not self.recording
+        if self.recording:
+            return "start"
+        return "stop"
+
+    def handle_release(self, now: float) -> None:
+        del now
+        self.pressed = False
+        return None
+
+    def mark_failed(self, command: str) -> None:
+        if command == "start":
+            self.recording = False
+        elif command == "stop":
+            self.recording = True
+
+
+def deliver_transcript(controller: Controller, transcript: str, output_mode: str) -> None:
+    if output_mode in {"clipboard", "both"}:
+        try:
+            copy_to_clipboard(transcript)
+        except Exception:
+            pass
+    if output_mode in {"type", "both"}:
+        type_text(controller, transcript)
+
+
 def main() -> int:
     args = parse_args()
     target = normalize_key(args.key)
-    held = False
-    last_event = 0.0
+    recorder = ToggleRecorder()
     controller = Controller()
 
     if not args.socket_path.exists():
@@ -112,46 +153,34 @@ def main() -> int:
     print(f"Push-to-talk ready on key: {target}")
 
     def on_press(key: keyboard.Key | keyboard.KeyCode) -> None:
-        nonlocal held, last_event
-        if held or not key_matches(key, target):
+        if not key_matches(key, target):
             return
         now = time.monotonic()
-        if now - last_event < 0.15:
+        command = recorder.handle_press(now)
+        if command is None:
             return
-        last_event = now
-        result = run_client(args, "start")
-        if result.returncode == 0:
-            held = True
+        result = run_client(args, command)
+        if result.returncode != 0:
+            recorder.mark_failed(command)
+        if result.returncode == 0 and command == "start":
             print("recording...")
+        elif result.returncode == 0 and command == "stop":
+            transcript = result.stdout.strip()
+            if transcript:
+                # Small delay avoids racing the key press with the typed output.
+                time.sleep(0.05)
+                deliver_transcript(controller, transcript, args.output_mode)
+                print(transcript)
         elif result.stdout:
             print(result.stdout.strip(), file=sys.stderr)
         elif result.stderr:
             print(result.stderr.strip(), file=sys.stderr)
 
     def on_release(key: keyboard.Key | keyboard.KeyCode) -> None:
-        nonlocal held, last_event
-        if not held or not key_matches(key, target):
+        if not key_matches(key, target):
             return
         now = time.monotonic()
-        if now - last_event < 0.15:
-            return
-        last_event = now
-        held = False
-        result = run_client(args, "stop")
-        transcript = result.stdout.strip()
-        if result.returncode == 0 and transcript:
-            if args.output_mode in {"clipboard", "both"}:
-                try:
-                    copy_to_clipboard(transcript)
-                except Exception:
-                    pass
-            if args.output_mode in {"type", "both"}:
-                # Small delay avoids racing the key release with the typed output.
-                time.sleep(0.05)
-                type_text(controller, transcript)
-            print(transcript)
-        elif result.stderr:
-            print(result.stderr.strip(), file=sys.stderr)
+        recorder.handle_release(now)
 
     with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
         listener.join()
