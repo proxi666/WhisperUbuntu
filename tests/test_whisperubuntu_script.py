@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import tempfile
 import unittest
@@ -61,6 +62,14 @@ class WhisperUbuntuScriptTests(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("inactive", result.stdout.lower())
+
+    def test_first_model_start_timeout_allows_slow_warmup(self) -> None:
+        text = SCRIPT.read_text(encoding="utf-8")
+        match = re.search(r"DAEMON_START_TIMEOUT_SECONDS=(\d+)", text)
+
+        self.assertIsNotNone(match)
+        assert match is not None
+        self.assertGreaterEqual(int(match.group(1)), 180)
 
 
 if __name__ == "__main__":

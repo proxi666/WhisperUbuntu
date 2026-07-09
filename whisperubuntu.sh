@@ -10,6 +10,7 @@ STATE_DIR="$HOME/.local/state/local-stt"
 LOG_DIR="$STATE_DIR/logs"
 DAEMON_PID_FILE="$PID_DIR/daemon.pid"
 LISTENER_PID_FILE="$PID_DIR/listener.pid"
+DAEMON_START_TIMEOUT_SECONDS=240
 
 mkdir -p "$PID_DIR" "$LOG_DIR"
 
@@ -104,7 +105,7 @@ status() {
 }
 
 wait_for_socket() {
-  for _ in $(seq 1 80); do
+  for _ in $(seq 1 "$DAEMON_START_TIMEOUT_SECONDS"); do
     if [[ -S "$SOCKET_PATH" ]]; then
       return 0
     fi
@@ -113,7 +114,7 @@ wait_for_socket() {
       tail -n 40 "$LOG_DIR/daemon.log" 2>/dev/null || true
       return 1
     fi
-    sleep 0.25
+    sleep 1
   done
   echo "Timed out waiting for daemon socket: $SOCKET_PATH"
   tail -n 40 "$LOG_DIR/daemon.log" 2>/dev/null || true
