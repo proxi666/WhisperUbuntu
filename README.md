@@ -1,8 +1,9 @@
 # WhisperUbuntu
 
-Local push-to-talk voice input for Ubuntu coding workflows.
+Local manual voice input for Ubuntu coding workflows.
 
-`WhisperUbuntu` keeps a Whisper model warm on GPU, listens for a global hold-to-talk key, transcribes spoken English locally, and sends the result back into the active workflow. It was built for the specific use case of speaking prompts into coding tools such as Codex inside VS Code without depending on a cloud speech API.
+`WhisperUbuntu` starts only when you ask for it, keeps a Whisper model warm while active, listens for a global F8 toggle key, transcribes spoken English locally, and sends the result back into the active workflow.
+It was built for the specific use case of speaking prompts into coding tools such as Codex inside VS Code without depending on a cloud speech API.
 
 Tested on Ubuntu-style desktop workflows with X11 and NVIDIA GPU inference.
 
@@ -48,8 +49,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
-./install_user_services.sh
-./toggle_local_stt.sh
+./whisperubuntu.sh
 ```
 
 Once running:
@@ -78,7 +78,7 @@ This project ties those pieces together into one practical local dictation loop.
 - PulseAudio or PipeWire via Pulse compatibility
 - `faster-whisper`
 - `Whisper large-v3-turbo`
-- `xclip`
+- optional `xclip` for clipboard output
 - Python 3.12
 
 ## Model Used
@@ -138,27 +138,37 @@ If your machine does not already have a working NVIDIA driver / CUDA-capable set
 
 This project is intentionally configured to stay off by default so VRAM remains available for other workloads.
 
-Install the user services first:
+Start the whole voice input stack manually:
 
 ```bash
-./install_user_services.sh
+./whisperubuntu.sh
 ```
 
-Start or stop both services with:
+Run the same script again to stop it:
+
+```bash
+./whisperubuntu.sh
+```
+
+Check whether it is active without loading the model:
+
+```bash
+./whisperubuntu.sh status
+```
+
+The compatibility wrapper still works and delegates to the same manual script:
 
 ```bash
 ./toggle_local_stt.sh
 ```
 
-You can also use the installed launcher directly after setup:
+## Optional User Services
 
-```bash
-~/.local/bin/whisperubuntu-toggle
-```
+The direct `./whisperubuntu.sh` path is the recommended flow.
+The systemd user units are still available for people who want service management, but they are optional and are not required for the manual workflow.
+They are not enabled for login autostart by default.
 
-## User Services
-
-Recommended install flow:
+Optional install flow:
 
 ```bash
 ./install_user_services.sh
@@ -171,14 +181,14 @@ This script:
 - keeps the service files themselves portable
 - avoids hardcoding your repo path into the checked-in unit files
 
-Start them:
+Start the optional services:
 
 ```bash
 systemctl --user start local-stt.service
 systemctl --user start push-to-talk.service
 ```
 
-Stop them:
+Stop the optional services:
 
 ```bash
 systemctl --user stop push-to-talk.service
