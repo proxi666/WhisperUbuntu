@@ -15,4 +15,4 @@ for _ in $(seq 1 20); do
 done
 
 source "$ROOT_DIR/.venv/bin/activate"
-exec python "$ROOT_DIR/scripts/push_to_talk_listener.py" --key f8 --output-mode both
+exec python "$ROOT_DIR/scripts/push_to_talk_listener.py" --key f8 --output-mode type
