@@ -49,7 +49,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
-./whisperubuntu.sh
+bash ./whisperubuntu.sh
 ```
 
 Once running:
@@ -141,19 +141,19 @@ This project is intentionally configured to stay off by default so VRAM remains 
 Start the whole voice input stack manually:
 
 ```bash
-./whisperubuntu.sh
+bash ./whisperubuntu.sh
 ```
 
 Run the same script again to stop it:
 
 ```bash
-./whisperubuntu.sh
+bash ./whisperubuntu.sh
 ```
 
 Check whether it is active without loading the model:
 
 ```bash
-./whisperubuntu.sh status
+bash ./whisperubuntu.sh status
 ```
 
 The compatibility wrapper still works and delegates to the same manual script:
