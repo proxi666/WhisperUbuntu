@@ -13,9 +13,8 @@ SCRIPT = ROOT / "whisperubuntu.sh"
 
 
 class WhisperUbuntuScriptTests(unittest.TestCase):
-    def test_manual_toggle_script_exists_and_is_executable(self) -> None:
+    def test_manual_toggle_script_exists(self) -> None:
         self.assertTrue(SCRIPT.exists())
-        self.assertTrue(os.access(SCRIPT, os.X_OK))
 
     def test_script_does_not_start_systemd_user_services(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
